@@ -10,11 +10,44 @@ app.use(cors());
 const users = [];
 
 function checksExistsUserAccount(request, response, next) {
-  // Complete aqui
+  
+  const { username } = request.params;
+
+  const user = users.find(user => user.username === username);
+
+  if (!user){
+    return response.status(404).json({error: 'username not found!!!'});
+  }
+  
+  request.user = user;
+
+  return next();
+
 }
 
+
+
 function checksCreateTodosUserAvailability(request, response, next) {
-  // Complete aqui
+  //pro: false,
+  const { user } = request;
+
+  const nrToDos = (user.todos).lenght;
+
+  if (!((user.pro === false && nrToDos < 10) || (user.pro === true))){
+    return response.status(403).json({error:'o user excedeu o limite de ToDos gratis'});
+  }
+
+  return next();
+
+
+
+
+
+
+
+
+
+
 }
 
 function checksTodoExists(request, response, next) {
@@ -24,6 +57,12 @@ function checksTodoExists(request, response, next) {
 function findUserById(request, response, next) {
   // Complete aqui
 }
+
+
+
+
+
+
 
 app.post('/users', (request, response) => {
   const { name, username } = request.body;
