@@ -11,7 +11,7 @@ const users = [];
 
 function checksExistsUserAccount(request, response, next) {
   
-  const { username } = request.params;
+  const { username } = request.headers;
 
   const user = users.find(user => user.username === username);
 
@@ -26,33 +26,56 @@ function checksExistsUserAccount(request, response, next) {
 }
 
 
-
 function checksCreateTodosUserAvailability(request, response, next) {
-  //pro: false,
+
   const { user } = request;
 
-  const nrToDos = (user.todos).lenght;
+  const nrToDos = (user.todos).length;
 
-  if (!((user.pro === false && nrToDos < 10) || (user.pro === true))){
+  if (user.pro === false && nrToDos > 9){
     return response.status(403).json({error:'o user excedeu o limite de ToDos gratis'});
   }
 
   return next();
 
-
-
-
-
-
-
-
-
-
 }
 
 function checksTodoExists(request, response, next) {
-  // Complete aqui
+
+  const { id } = request.params;
+  const { username } = request.headers;
+
+  const user = users.find(user => user.username === username);
+
+  if (!user){
+    return response.status(404).json({error: 'username not found!!!'});
+  }
+
+  const todo = user.todos.find(todo => todo.id === id);
+
+  // Regular expression to check if string is a valid UUID
+  const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+
+  const checkId =  regexExp.test(id); // true
+
+  if (checkId === false){
+    return response.status(400).json({error: 'Not valid id!!!'});
+  }
+
+  if (!todo) {
+    return response.status(404).json({error: 'ToDos not found!!!'})
+  }
+
+  request.user = user;
+  request.todo = todo;
+
+  return next();
+
+
 }
+
+
+
 
 function findUserById(request, response, next) {
   // Complete aqui
@@ -107,7 +130,10 @@ app.patch('/users/:id/pro', findUserById, (request, response) => {
 app.get('/todos', checksExistsUserAccount, (request, response) => {
   const { user } = request;
 
+  //console.log(user.todos.length);
+
   return response.json(user.todos);
+
 });
 
 app.post('/todos', checksExistsUserAccount, checksCreateTodosUserAvailability, (request, response) => {
@@ -133,6 +159,8 @@ app.put('/todos/:id', checksTodoExists, (request, response) => {
 
   todo.title = title;
   todo.deadline = new Date(deadline);
+
+  //console.log(todo);
 
   return response.json(todo);
 });
